@@ -1,219 +1,61 @@
-How To Build Header Only Boost
-=====
+[//]: # (for the best experience open this file in VS Code)
 
-Couple of scripts to build true header only Boost libraries.
-Tested with Ubuntu 16.04 and Boost 1.68.0.
+# . (scripts)
+Generator scripts are in this folder.
 
-The main idea is to use Boost BCP tool on every library to find out if it produces 'src' folders in dependencies.
-We don't want extra dependencies so will remove everything except 'src' in 'libs' (examples, docs).
+**Platform**: linux
 
-## Prepare 
-Download and unpack Boost and remove everything unneeded.
+**Entry point**: [`run.sh`](./run.sh) `1.70.0`
 
-```
-./prepare.sh
-```
+## Details
+Default it download the selected boost version, compile tools, extract package information and install all headers and sources only. To deploy a subset of packages, create a package list in `output/install_libraries` file.
 
-## List
-Prepare lists of libraries to extraction. Runs bcp on every library and collects dependencies.
+Parameter | Description
+---       | ---
+-c | clear output folder
+-v | verbose mode
 
-Produces *header_only_libraries.txt* and *all_libraries.txt* (with dependencies).
+These files were checked / executed on Ubuntu 18.04 LTS under WSL (Windows Subsystem for Linux)  
+Most of them are standalone scripts (not all cases were tested).  
+Based on <https://github.com/ki11roy/header_only_boost>
 
-```
-./list.sh
-```
+File | Description
+---  | ---
+[run.sh](./run.sh) | Gather and execute files in order.
+[prepare.sh](./prepare.sh) | Download and uncompress the selected boost, collect library names, compile `b2` and `bcp` if necessary (it takes a couple of minutes)
+[list\_light.sh](./list_light.sh) | Collect information about libraries and generated [dependency files](#output/doc)
+[deploy\_source.sh](./deploy_source.sh) | Deploy all libraries from `output/install_libraries` with `bcp`
+[deploy\_all\_sources.sh](./deploy_all_sources.sh) | Copy sources from `libs/**/src/**` and `boost/*.[|cpp|hpp|h|c|ipp]`
+[strip\_libs.sh](./strip_libs.sh) | backup `libs` folder and strip non-source files for faster processing
+[redo\_strip.sh](./redo_strip.sh) | redo what `strip_libs.sh` did: delete stripped `libs` folder and restore it from the backup
+[ensure\_variables.sh](./ensure_variables.sh) | set defaults of unset but required variables. Some of these variables are exported from `prepare.sh`.
 
-<details><summary>expand</summary>
-<p>
+# boost\_VERSION\_NUMBER
+You can copy boost library here. If missing, script will offer to download/extract it. The tools will compile in this folder either.
 
-```
-accumulators 23M
-align 864K
-any 3.2M
-array 676K
-assert 608K
-assign 8.9M
-bind 920K
-callable_traits 368K
-circular_buffer 8.7M
-compatibility 132K
-concept_check 3.1M
-config 708K
-container_hash 1.3M
-conversion 20K
-convert 35M
-core 732K
-crc 748K
-detail 11M
-disjoint_sets 44K
-dynamic_bitset 9.5M
-endian 1.7M
-foreach 8.0M
-format 4.6M
-function 9.0M
-functional 16M
-function_types 9.9M
-fusion 32M
-hana 20M
-heap 9.8M
-hof 504K
-icl 16M
-integer 744K
-interprocess 15M
-intrusive 3.2M
-io 636K
-iterator 16M
-lambda 7.5M
-lexical_cast 12M
-locale 9.8M
-local_function 9.6M
-logic 652K
-metaparse 12M
-move 1.2M
-mp11 752K
-mpl 11M
-msm 30M
-multi_array 8.7M
-multi_index 12M
-optional 4.6M
-phoenix 41M
-poly_collection 17M
-polygon 7.2M
-predef 672K
-preprocessor 3.4M
-property_tree 13M
-proto 21M
-ptr_container 12M
-qvm 3.3M
-ratio 7.7M
-rational 1.4M
-scope_exit 9.2M
-signals2 12M
-smart_ptr 2.6M
-sort 4.3M
-static_assert 1.8M
-throw_exception 636K
-tokenizer 7.9M
-tti 11M
-tuple 880K
-type_index 3.1M
-typeof 7.3M
-type_traits 1.9M
-units 17M
-unordered 4.1M
-utility 3.3M
-uuid 12M
-variant 9.6M
-vmd 2.9M
-winapi 1.3M
-xpressive 26M
-yap 2.9M
-```
+# output/boost, output/libs
+These folders are copied / stripped from the original boost package. Libs contains only source files.
 
-</p>
-</details>
+# output/doc
+The following files describe which library depends on which (**`libs`**) package:
 
-## Extract
-Run bcp to get final distributive.
+* [01\_header\_only\_libraries.txt](output/doc/01_header_only_libraries.txt)
+  * **use these libraries freely**
 
-```
-./extract.sh
-```
+* [02\_other\_dependency\_libraries.txt](output/doc/02_other_dependency_libraries.txt)
+  * **some** functionalities have lib **dependencies**
 
-## Result
-For those who are lazy here is the resulting bcp command line:
+* [03\_own\_dependency\_libraries.txt](output/doc/03_own_dependency_libraries.txt)
+  * **avoid usage** of any library from here
 
-```
-bcp \
-accumulators \
-align \
-any \
-array \
-assert \
-assign \
-bind \
-callable_traits \
-circular_buffer \
-compatibility \
-concept_check \
-config \
-container_hash \
-conversion \
-convert \
-core \
-crc \
-detail \
-disjoint_sets \
-dynamic_bitset \
-endian \
-foreach \
-format \
-function \
-functional \
-function_types \
-fusion \
-geometry \
-gil \
-hana \
-heap \
-hof \
-icl \
-integer \
-interprocess \
-intrusive \
-io \
-iterator \
-lambda \
-lexical_cast \
-locale \
-local_function \
-logic \
-metaparse \
-move \
-mp11 \
-mpl \
-msm \
-multi_array \
-multi_index \
-optional \
-phoenix \
-poly_collection \
-polygon \
-predef \
-preprocessor \
-property_tree \
-proto \
-ptr_container \
-qvm \
-ratio \
-rational \
-scope_exit \
-signals2 \
-smart_ptr \
-sort \
-static_assert \
-throw_exception \
-tokenizer \
-tti \
-tuple \
-type_index \
-typeof \
-type_traits \
-units \
-unordered \
-utility \
-uuid \
-variant \
-vmd \
-winapi \
-xpressive \
-/tmp/boost
-```
+* [04\_with\_dependency\_libraries.txt](output/doc/04_with_dependency_libraries.txt)
+  * list all libraries which have dependencies
 
-## References
-* https://www.boost.org/doc/libs/1_68_0/tools/bcp/doc/html/index.html
-* https://www.boost.org/doc/libs/1_68_0/more/getting_started/unix-variants.html#header-only-libraries
-* https://steveire.wordpress.com/2016/08/21/boost-dependencies-and-bcp/
-* https://www.boost.org/doc/libs
-* https://unix.stackexchange.com/questions/158234/tool-in-unix-to-subtract-text-files
+* [05\_all\_libraries.txt](output/doc/05_all_libraries.txt)
+  * list all libraries and their dependencies
 
+# output/temp
+Temp files generated during process. Most of them made during prepare.
+
+* [to\_README.md](output/temp/to_README.md)
+  * Markdown formatted version information about the selected boost version (source json is downloaded from boost.org).
